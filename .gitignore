@@ -1,0 +1,21 @@
+# Root level ignores
+node_modules/
+.DS_Store
+.env
+.env.local
+*.log
+.idea/
+.vscode/
+dist/
+build/
+*.tmp
+*.bak
+
+# Server specific (if needed)
+/server/node_modules/
+/server/.env
+
+# Client - let Vite's gitignore handle client specifics
+/client/dist/
+/client/node_modules/
+!/client/.gitignore  # Keep the client's own gitignore

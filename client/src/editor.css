@@ -1,0 +1,110 @@
+    *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  body{
+    background-color: #F3F3F3;
+    margin: 0;
+  }
+
+  .container .ql-editor{
+    width: 8.5in;
+    min-height: 8in;
+    padding: 1in;
+    margin: 1rem;
+    box-shadow: 0 0 5px 0 rgba(0,0,0,0.5);
+    background-color: white;
+    
+  }
+
+  .container .ql-editor.ql-snow{
+    border: none;
+    display: flex;
+    justify-content: center;
+  }
+
+
+  .container .ql-toolbar.ql-snow{
+    display: flex;
+    justify-content: center;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background-color: #F3F3F3;
+    border: none;
+    box-shadow: 0 0 5px 0 rgba(0,0,0,0.5);
+  }
+
+  .container .ql-container.ql-snow{
+    border: none;
+    display: flex;
+    justify-content: center;
+  }
+
+ 
+   .page {
+    width: 8.5in;
+    min-height: 8in;
+    padding: 1in;
+    margin: 1rem 0;
+    box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.5);
+    background-color: white;
+    page-break-after: always;
+  }
+  
+  
+  /* Clean up the print layout */
+@media print {
+  /* Remove browser-added headers/footers programmatically */
+  @page {
+    margin: 0; /* Removes headers/footers added by browsers */
+  }
+
+  /* Center the content properly */
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: white;
+  }
+  .editor-container{
+    box-shadow: none;
+  }
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  .container .ql-editor {
+    margin: 0 auto;
+    padding: 1in; /* Adjust for content padding */
+    box-shadow: none;
+    border: none; /* Remove any left line or border */
+    background-color: white;
+    width: 8.27in; /* A4 width */
+    min-height: 11.69in; /* A4 height */
+  }
+
+  /* Hide unnecessary UI elements */
+  .container .ql-toolbar.ql-snow,
+  .nav-bar, /* Replace with your actual navbar class */
+  .footer,
+  .other-elements {
+    display: none; /* Hides non-essential elements */
+  }
+}
+
+
+/* .custom-tooltip {
+  position: absolute;
+  background-color: #333;
+  color: #fff;
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 1000;
+  display: none;
+} */
