@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import GroupSection from '../GroupSection';
+import { useNavigate, Link } from 'react-router-dom';
 import DocumentTemplates from './DocumentTemplates';
 import RecentDocuments from './RecentDocuments';
+import SidebarNav from './SidebarNav';
 
 const Home = ({ userId }) => {
   const [documents, setDocuments] = useState([]);
@@ -77,15 +77,25 @@ const Home = ({ userId }) => {
   
 
   return (
-    <div className="flex min-h-screen">
-      <div className="flex-1 p-8">
+    <div className="flex min-h-screen relative">
+      {/* Main Content */}
+      <div className="flex-1 p-8 pr-24">
         <DocumentTemplates onTemplateSelect={createNewDocument} />
         <div className="border-t border-gray-200 my-6"></div>
-        <RecentDocuments documents={documents} onDocumentOpen={openDocument} onDeleteDocument={onDeleteDocument}/>
+        <RecentDocuments
+          documents={documents}
+          onDocumentOpen={openDocument}
+          onDeleteDocument={onDeleteDocument}
+        />
       </div>
-      <div className="w-80 p-6 bg-gray-50">
-        <GroupSection userId={userId} />
-      </div>
+
+      
+
+
+      {/* Sidebar on Right */}
+      <div className="sticky top-0 right-0 h-screen">
+  <SidebarNav userId={userId} />
+</div>
     </div>
   );
 };

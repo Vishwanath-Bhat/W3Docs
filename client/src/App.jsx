@@ -8,13 +8,14 @@ import Navbar from './components/Navbar';
 import Home from './components/Home/Home';
 import Editor from './components/Editor';
 import GroupEditor from './components/GroupEditor';
+import GroupSection from './components/groups/GroupSection';
 import  useAuth  from './redux/hooks/useAuth'
 
 
 
 function App() {
-  const { user, UpdateUserLogin} = useAuth()
-  const [userId, setuserId] = useState()
+  const { userId, user, UpdateUserLogin, UpdateUserID} = useAuth()
+  // const [userId, setuserId] = useState()
   
 //   socket.on('connect', () => {
 //     // console.log('Connected to server');
@@ -28,8 +29,8 @@ function App() {
           throw new Error('Error fetching user ID');
         }
         const data = await response.json();
-        // console.log(data._id)
-        setuserId(data._id)
+        UpdateUserID(data._id)
+        // setuserId(data._id)
       } catch (error) {
         console.error('Error fetching user ID:', error);
       }
@@ -56,6 +57,7 @@ function App() {
         <Route path="/register" element={!user ? <RegisterForm /> : <Navigate to="/"/>} />
         <Route path="/myEditor" element={user ? <Editor userId={userId}/> : <Navigate to="/login"/>} />
         <Route path="/groupEditor" element={user ? <GroupEditor /> : <Navigate to="/login"/>} />
+        <Route path="/group" element={user ? <GroupSection /> : <Navigate to="/login"/>} />
       </Routes>
     </Router>
   );

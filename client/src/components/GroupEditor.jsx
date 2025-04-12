@@ -8,7 +8,7 @@ import Quill from 'quill'
 import 'quill/dist/quill.snow.css';
 import { io } from 'socket.io-client';
 
-
+import useAuth from '../redux/hooks/useAuth';
 
 
 const GroupEditor = () => {
@@ -21,6 +21,7 @@ const GroupEditor = () => {
   const [socket, setSocket] = useState()
   const [quill, setQuill] = useState()
 
+  const { userId } = useAuth()
 
   //Socket connection
   useEffect(() => {
@@ -137,7 +138,7 @@ const GroupEditor = () => {
       {/* Back Button */}
       <div className="flex items-center mb-4">
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/group', { state: { userId } })}
           className="flex items-center text-blue-500 hover:text-blue-700 transition"
         >
           <svg

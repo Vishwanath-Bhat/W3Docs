@@ -35,7 +35,7 @@ const DocumentTemplates = ({ onTemplateSelect }) => {
   // Get first four non-recent templates for initial view
   const initialTemplates = templates
     .filter(template => !template.isRecent)
-    .slice(0, 4);
+    .slice(0, 5);
 
   return (
     <div className="mb-8">
@@ -72,7 +72,7 @@ const DocumentTemplates = ({ onTemplateSelect }) => {
           {Object.entries(templatesByCategory).map(([category, categoryTemplates]) => (
             <div key={category} className="mb-10">
               <h2 className="text-xl font-medium mb-4">{category}</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
                 {categoryTemplates.filter(t => !t.isRecent).map((template, index) => (
                   <TemplateCard 
                     key={index} 
@@ -87,7 +87,7 @@ const DocumentTemplates = ({ onTemplateSelect }) => {
       ) : (
         // Initial view with blank document and first few templates
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {/* Blank document (special case) */}
             <div 
               className="border border-gray-200 rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow"

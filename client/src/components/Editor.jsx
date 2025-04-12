@@ -1,20 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
-import '../editor.css'
 import { toPng } from 'html-to-image';
-import Quill from 'quill'
+import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
+import '../editor.css';
 import { TOOLBAR_OPTIONS, addTooltipsToToolbar } from "../utils/quillConfig";
 
-//Note
-/* 
--> there is no css for the Document Add that -> (done)
--> implement adding pages of a4 size
--> add delete Document in home page
--> use of quill instead of react quill 
--> create different compoents, thunks , reducers */
+
 const Editor = ({ userId }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -22,76 +14,69 @@ const Editor = ({ userId }) => {
   const documentId = queryParams.get('documentId');
   const [content, setContent] = useState(null);
   const [title, setTitle] = useState('Untitled Document');
-  const [quill, setQuill] = useState()
+  const [quill, setQuill] = useState();
+  const [suggestion, setSuggestion] = useState("");
+  const suggestionRef = useRef(null);
+  const wrapperRef = useRef(null);
 
+  const wrapperCallback = useCallback(wrapper => {
+    if(wrapper == null) return;
 
-  const wrapperRef = useCallback(wrapper =>{
-    if(wrapper == null) return
-
-    wrapper.innerHTML = "" // we do this because the editor gets added up for every render so we clean it
-    const editor = document.createElement("div")
-    wrapper.append(editor)
-    const q = new Quill(editor, { theme: "snow", modules: {
+    wrapper.innerHTML = ""; // we do this because the editor gets added up for every render so we clean it
+    const editor = document.createElement("div");
+    wrapper.append(editor);
+    const q = new Quill(editor, { 
+      theme: "snow", 
+      modules: {
         toolbar: TOOLBAR_OPTIONS
-    }
-  })
-  setQuill(q)
-  addTooltipsToToolbar();
-  }, [])
+      }
+    });
+    setQuill(q);
+    addTooltipsToToolbar();
+  }, []);
 
-//the useEffect in your code will not re-run whenever you type something on the screen. 
-//This is because useEffect only depends on the quill variable in the dependency array, and quill does not change when you type. 
-//Instead, typing in the editor changes the internal state of the Quill instance but does not trigger a React re-render or a useEffect run.
-//To achieve the desired behavior, you need to listen to Quill's text-change event, which fires whenever the content of the editor changes.
-  
+  useEffect(() => {
+    if (!quill) return;
 
-useEffect(() => {
-  if (!quill) return;
+    let lastSentText = "";
 
-  let lastSentText = "";
+    const handleChange = (delta, oldDelta, source) => {
+      if (source !== "user") return;
 
-  const handleChange = (delta, oldDelta, source) => {
-    if (source !== "user") return;
+      // Check if space or period was pressed
+      const lastChar = delta.ops?.find(op => 
+        typeof op.insert === "string" && op.insert.length > 0
+      )?.insert.slice(-1);
 
-    // Check if space or period was pressed
-    const lastChar = delta.ops?.find(op => 
-      typeof op.insert === "string" && op.insert.length > 0
-    )?.insert.slice(-1);
+      const shouldTrigger = lastChar === ' ' || lastChar === '.';
+      if (!shouldTrigger) return;
 
-    const shouldTrigger = lastChar === ' ' || lastChar === '.';
-    if (!shouldTrigger) return;
+      const cursorPosition = quill.getSelection()?.index;
+      if (cursorPosition === null || cursorPosition === undefined) return;
 
-    const cursorPosition = quill.getSelection()?.index;
-    if (cursorPosition === null || cursorPosition === undefined) return;
+      const fullText = quill.getText(0, cursorPosition);
+      
+      // Extract current phrase (from last punctuation or start)
+      const lastBreak = Math.max(
+        fullText.lastIndexOf('. '),
+        fullText.lastIndexOf('! '),
+        fullText.lastIndexOf('? ')
+      );
+      
+      const currentPhrase = fullText.slice(lastBreak + 1).trim();
 
-    const fullText = quill.getText(0, cursorPosition);
-    
-    // Extract current phrase (from last punctuation or start)
-    const lastBreak = Math.max(
-      fullText.lastIndexOf('. '),
-      fullText.lastIndexOf('! '),
-      fullText.lastIndexOf('? ')
-    );
-    
-    const currentPhrase = fullText.slice(lastBreak + 1).trim();
+      if (currentPhrase && currentPhrase !== lastSentText) {
+        console.log('Sending to backend:', currentPhrase);
+        sendToPredictionModel(currentPhrase);
+        lastSentText = currentPhrase;
+      }
+    };
 
-    if (currentPhrase && currentPhrase !== lastSentText) {
-      console.log('Sending to backend:', currentPhrase);
-      sendToPredictionModel (currentPhrase);
-      lastSentText = currentPhrase;
-    }
-  };
-
-  quill.on("text-change", handleChange);
-
-  return () => {
-    quill.off("text-change", handleChange);
-  };
-}, [quill]);
-
-
-
-
+    quill.on("text-change", handleChange);
+    return () => {
+      quill.off("text-change", handleChange);
+    };
+  }, [quill]);
 
   useEffect(() => {
     if (documentId) {
@@ -102,7 +87,62 @@ useEffect(() => {
     }
   }, [documentId, quill]);
 
+  useEffect(() => {
+    if (!quill) return;
 
+    const handleKeyDown = (event) => {
+      if (event.key === "Tab" && suggestion) {
+        event.preventDefault(); // Prevent default tab behavior
+        insertSuggestion();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [quill, suggestion]);
+
+  const insertSuggestion = () => {
+    if (!quill || !suggestion) return;
+    
+    const range = quill.getSelection();
+    if (range) {
+      quill.insertText(range.index, suggestion + " ");
+      quill.setSelection(range.index + suggestion.length);
+    }
+    setSuggestion("");
+    positionSuggestionBox(false);
+  };
+
+  const positionSuggestionBox = (show, text = "") => {
+    if (!quill || !suggestionRef.current) return;
+    
+    if (!show) {
+      suggestionRef.current.style.display = "none";
+      return;
+    }
+
+    const range = quill.getSelection();
+    if (!range) return;
+
+    const bounds = quill.getBounds(range.index);
+    const editor = quill.root;
+    const editorRect = editor.getBoundingClientRect();
+    const scrollTop = editor.scrollTop;
+
+    suggestionRef.current.style.display = "block";
+    suggestionRef.current.style.position = "absolute";
+    suggestionRef.current.style.left = `${bounds.left + editorRect.left}px`;
+    suggestionRef.current.style.top = `${bounds.top + editorRect.top + scrollTop}px`;
+    suggestionRef.current.textContent = text;
+  };
+
+  useEffect(() => {
+    if (suggestion && quill) {
+      positionSuggestionBox(true, suggestion);
+    } else {
+      positionSuggestionBox(false);
+    }
+  }, [suggestion, quill]);
 
   const sendToPredictionModel = async (sentence) => {
     try {
@@ -116,12 +156,16 @@ useEffect(() => {
   
       const data = await response.json();
       console.log("Prediction:", data);
+      if (data.next_word) {
+        setSuggestion(data.next_word); // Store prediction in state
+      } else {
+        setSuggestion(""); // Clear if no prediction
+      }
     } catch (error) {
       console.error("Error sending data:", error);
     }
   };
 
-  
   const captureThumbnail = async () => {
     const editorElement = document.querySelector('.ql-editor');
     if (!editorElement) return null;
@@ -129,7 +173,6 @@ useEffect(() => {
     // Temporarily remove margin/padding
     const prevStyle = editorElement.style.cssText;
     editorElement.style.margin = '0';
-    // editorElement.style.padding = '0';
     editorElement.style.backgroundColor = '#fff'; // Ensure white background
 
     try {
@@ -142,14 +185,12 @@ useEffect(() => {
         // Restore previous styles
         editorElement.style.cssText = prevStyle;
     }
-};
-
+  };
 
   const fetchDocument = async (id) => {
     try {
       const response = await fetch(`http://localhost:3000/api/documents/load/${id}`);//this is document id which can be passed in route and retrive by useLocation
       const data = await response.json();
-      // console.log(data)
       setTitle(data.title);
       if (quill && data.content && data.content.ops) {
         quill.setContents(data.content); // Load content into Quill
@@ -182,12 +223,9 @@ useEffect(() => {
     const editorContent = quill.getContents();
     
     try {
-      // First capture the thumbnail
       const thumbnail = await captureThumbnail();
       const compressedThumbnail = await compressImage(thumbnail);
-      // console.log('compressedThumbnail', compressedThumbnail); 
       
-      // Then save everything
       const response = await fetch('http://localhost:3000/api/documents/save', {
         method: 'POST',
         headers: {
@@ -211,7 +249,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="editor-container p-8 mx-auto max-w-5xl bg-white shadow-lg rounded-md">
+    <div className="editor-container p-8 mx-auto max-w-5xl bg-white shadow-lg rounded-md relative">
       {/* Back Button */}
       <div className="other-elements flex items-center mb-4">
         <button
@@ -240,8 +278,7 @@ useEffect(() => {
           placeholder="Document Title"
           className="other-elements w-full mb-4 p-2 border-b text-xl font-semibold"
         />
-        {/* <ReactQuill theme="snow" value={content} onChange={setContent} className="h-full border rounded-lg" /> */}
-        <div className="container" ref={wrapperRef}></div>
+        <div className="container" ref={wrapperCallback}></div>
       </div>
 
       {/* Save Button */}
@@ -252,6 +289,13 @@ useEffect(() => {
       >
         Save
       </button>
+
+      {/* Suggestion Box */}
+      <div
+        ref={suggestionRef}
+        className="suggestion-box absolute bg-gray-200 text-gray-700 px-2 py-1 rounded shadow-md z-10"
+        style={{ display: 'none' }}
+      />
     </div>
   );
 };

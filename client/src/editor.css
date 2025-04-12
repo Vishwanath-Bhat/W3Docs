@@ -51,6 +51,25 @@
     background-color: white;
     page-break-after: always;
   }
+
+  .suggestion-box {
+    font-family: inherit;
+    font-size: 0.9em;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    opacity: 0.9;
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-left: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .suggestion-box::before {
+    content: "→";
+    margin-right: 4px;
+    opacity: 0.6;
+  }
   
   
   /* Clean up the print layout */

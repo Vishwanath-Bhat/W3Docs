@@ -36,7 +36,7 @@ const RecentDocuments = ({ documents, onDocumentOpen, onDeleteDocument }) => {
   return (
     <div className="mt-6">
       <h2 className="text-lg font-medium text-gray-700 mb-4">Recent documents</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
         {documents.map((doc) => (
           <div
             key={doc._id}
